@@ -4,7 +4,6 @@
 TBD
 
 ### todo
-- convex fuzzy set
 - fuzzy numbers
 - intervals?
 - fuzzy analysis

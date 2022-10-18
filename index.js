@@ -135,7 +135,7 @@ function relativeCardinality(MU, crispSet) {
 }
 
 function fuzzyCardinality() {
-  // for each alpha (how do I select which alphas???)
+  // for each alpha (how do I select which alphas??? => strongAlphaCut(0)?)
   // cadinality is simply the length (alpha is a crisp set)
   // then the fuzzy cradinality is an ordered pair:
   // {alphaCut(MU, crispSet, alpha).length, alpha}
