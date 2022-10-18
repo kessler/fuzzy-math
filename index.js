@@ -139,7 +139,8 @@ function fuzzyCardinality() {
   // cadinality is simply the length (alpha is a crisp set)
   // then the fuzzy cradinality is an ordered pair:
   // {alphaCut(MU, crispSet, alpha).length, alpha}
-  // don't understand this yet...
+  // 
+  // so it's basically just a map from alpha to its crisp set
 }
 
 // in classis set theory compliment is
