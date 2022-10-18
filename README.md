@@ -5,7 +5,9 @@ TBD
 
 ### todo
 - convex fuzzy set
-- 
+- fuzzy numbers
+- intervals?
+- fuzzy analysis
 
 ### reference material
 - https://www.youtube.com/watch?v=oWqXwCEfY78 and subsequent lectures
