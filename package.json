@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/kessler/fuzzy-math#readme",
   "devDependencies": {
+    "asciichart": "^1.5.25",
     "ava": "^4.3.3"
   }
 }

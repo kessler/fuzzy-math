@@ -1,4 +1,5 @@
 const test = require('ava')
+const ascify = require('./ascify')
 const {
   FuzzySet,
   core,
@@ -8,7 +9,9 @@ const {
   strongAlphaCut,
   isConvex,
   isEqual,
-  isNormalized
+  isNormalized,
+  isSubset,
+  isProperSubset
 } = require('./index')
 
 const MU = x => {
@@ -44,11 +47,9 @@ test('height', t => {
 })
 
 test('alphaCut', t => {
-  t.deepEqual(alphaCut(MU, normalCrispSet, 0), normalCrispSet)
   t.deepEqual(alphaCut(MU, normalCrispSet, 0.5), [1, 2, 3])
   t.deepEqual(alphaCut(MU, normalCrispSet, 0.7), [2])
   t.deepEqual(alphaCut(MU, subNormalCrispSet, 0.2), [])
-  t.deepEqual(alphaCut(MU, subNormalCrispSet, 0), subNormalCrispSet)
 })
 
 test('strongAlphaCut', t => {
@@ -79,5 +80,35 @@ test('isEqual', t => {
 })
 
 test('isSubset', t => {
+  const MUsub = x => {
+    return Math.max(0, MU(x) - 0.2)
+  }
+  
+  t.true(isSubset(MUsub, MU, normalCrispSet))
 
+  const MUnotsub = x => {
+    return Math.min(1, MU(x) + 0.7)
+  }
+
+  t.false(isSubset(MUnotsub, MU, normalCrispSet))
+
+  // MU is subset of MU but not a proper subset
+  t.true(isSubset(MU, MU, normalCrispSet))
+})
+
+test('isProperSubset', t => {
+  const MUsub = x => {
+    return Math.max(0, MU(x) - 0.3)
+  }
+  
+  t.true(isProperSubset(MUsub, MU, normalCrispSet))
+
+  // const MUnotsub = x => {
+  //   return Math.min(1, MU(x) + 0.7)
+  // }
+
+  // t.false(isProperSubset(MUnotsub, MU, normalCrispSet))
+
+  // // MU is subset of MU but not a proper subset
+  // t.false(isProperSubset(MU, MU, normalCrispSet)) 
 })
