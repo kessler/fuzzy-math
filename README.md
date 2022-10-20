@@ -1,6 +1,8 @@
 # fuzzy-math (WIP)
 
-It's math stuff, so there's gonna be a lot of explaining, mostly for myself :-)
+Seriously this is really WIP!
+
+<small>I'm not a mathematician and this library did not undergo any rigorious inspection by one. More over I wrote this library while learning the subject matter, so there are probably serious mistakes in it. However, at some point, I will collaborate with a mathematician to rectify this situation.</small>
 
 ## Fuzzy Sets
 
@@ -24,10 +26,6 @@ TBD: examples and reference
 
 ## thoughts
 
-#### where is U in (U,m) ?
-
-In this implementation U is almost always the equivalent of R inside a computer. I should probably think about incorporating U into the mix somehow, becaue obviously it's not always the computerized version of R
-
 #### Set vs Simple array as main data structure
 - Set is the "natural" choice, since it maintains an important quality of classic mathematical sets which is, the distinctness of it's members.
 
@@ -36,6 +34,8 @@ In this implementation U is almost always the equivalent of R inside a computer.
 - The array api (reduce, filter etc) is much more cleaner than the Set's. Having similar api on a Set will require additional coding.
 
 So for now I choose Array over Set.
+
+- it seems like MU is not a proper subset of MU but is a subset
 
 #### not just numerical fuzzy sets
 
@@ -57,7 +57,21 @@ const MU = x => {
 
 ```
 
+#### serialization 
+- Serializing and de-serializing code might be a serious security risk. How to safely serialize fuzzy sets then, without serializing the membership function code?
+
+- perhaps there can be a "static" and "dynamic" versions of a fuzzy set. The dynamic one will have a user provided function and can only be created at run time. The static one will serialize the fuzzy set array `[[x, MU(x)...]]` and when loaded will have an internal membership function that outputs from that array (practically this should be an object with a map from x => alpha)
+
+
 ### todo
+
+#### repeatative code
+when I started to write this the code was very nice, small and clean, but pretty quickly stuff got verbose and icky. Membership filtering from the crisp in low level api is one example but not the only one. Need to deal with that at some point, but in a way that's not going to double or triple the amount of iterations.
+
+#### normalization
+When no member of the crisp set has an alpha of one
+
+#### big ones
 - fuzzy numbers
 - intervals?
 - fuzzy analysis

@@ -79,8 +79,10 @@ function core(MU, U) {
 }
 
 // aka sup
+// the all members of U which do not have alpha = 0
+// this is also the strongAlphaCut where alpha is 0
 function support(MU, U) {
-  return strongAlphaCut(MU, U, 0)
+  return U.filter(x => isMember(MU, x)) // deepEquals( strongAlphaCut(MU, U, 0) )
 }
 
 function height(MU, U) {
@@ -92,12 +94,12 @@ function height(MU, U) {
   return max
 }
 
-// alpha level set
+// alpha level set is made of all members MU(x) >= alpha
 function alphaCut(MU, U, alpha) {
   checkZeroToOne(alpha)
 
   return U.filter(x => {
-    const MUx = MU(x) 
+    const MUx = MU(x)
     return MUx >= alpha && MUx > 0
   })
 }
@@ -107,7 +109,7 @@ function strongAlphaCut(MU, U, alpha) {
   checkZeroToOne(alpha)
 
   return U.filter(x => {
-    const MUx = MU(x) 
+    const MUx = MU(x)
     return MUx > alpha && MUx > 0
   })
 }
@@ -118,6 +120,8 @@ function isNormalized(MU, U) {
 
 // Pretty sure i'm missing something here...
 function isConvex(MU, x1, x2, lambda) {
+  throw new Error('probably wrong')
+
   checkZeroToOne(lambda, 'lambda')
 
   // this should be a member of U, but it's not??
@@ -143,11 +147,18 @@ function isEqual(MUa, MUb, U) {
   return true
 }
 
-// A fuzzy subset of B if 
+// A is a fuzzy subset of B if 
 // all MUa(x) <= MUb(x)
 function isSubset(MUa, MUb, U) {
   for (const member of U) {
-    if (MUa(member) > MUb(member)) {
+    const yA = MUa(member)
+    if (yA === 0) continue
+
+    const yB = MUb(member)
+    if (yB === 0) continue
+
+    // negation of MUa(x) <= MUb(x)
+    if (yA > yB) {
       return false
     }
   }
@@ -155,12 +166,18 @@ function isSubset(MUa, MUb, U) {
   return true
 }
 
-// A fuzzy subset of B if 
+// A is fuzzy subset of B if 
 // all MUa(x) < MUb(x)
 function isProperSubset(MUa, MUb, U) {
   for (const member of U) {
-    if (MUa(member) >= MUb(member)) {
-      console.log(MUa(member), MUb(member))
+    const yA = MUa(member)
+    if (yA === 0) continue
+
+    const yB = MUb(member)
+    if (yB === 0) continue
+
+    // negation of MUa(x) < MUb(x)
+    if (yA >= yB) {
       return false
     }
   }
@@ -168,43 +185,53 @@ function isProperSubset(MUa, MUb, U) {
   return true
 }
 
+// the sum of all the alphas
 function scalarCardinality(MU, U) {
-  return U.reduce((prev, curr) => prev + MU(curr))
+  return U.reduce((prev, curr) => prev + MU(curr), 0)
 }
 
+// ratio of scalarCardinality to length of U
 function relativeCardinality(MU, U) {
-  const scalar = scalarCardinality(MU, U) / U.length
+  return scalarCardinality(MU, U) / U.length
 }
 
-function fuzzyCardinality() {
-  // for each alpha (how do I select which alphas??? => strongAlphaCut(0)?)
-  // cadinality is simply the length (alpha is a crisp set)
-  // then the fuzzy cradinality is an ordered pair:
-  // {alphaCut(MU, U, alpha).length, alpha}
-  // 
-  // so it's basically just a map from alpha to its crisp set
+// the length or size of each alpha level
+function fuzzyCardinality(MU, U) {
+  const aMap = alphaMap(MU, U)
+  for (const alpha of aMap.keys()) {
+    aMap.set(alpha, aMap.get(alpha).length)
+  }
+  return aMap
 }
 
-// in classis set theory compliment is
+// in classic set theory compliment is
 // X - universal set
 // A = {x memberOf X : some condition}
 // Ac (compliment) = {x memberOf X : x notMemberOf A}
 // maybe I can forgo the x member of X for Ac, but meh...
 //
-// in fuzzy set theory compliment is simply
-// a negation of MU; 1-MU(x)
-function compliment() {
-
+// a fuzzy set compliment has a MUc = 1-MU(x)
+// of course many times it doesn't make sense to return
+// the actual members of the compliment, since it might
+// be infinite or, inside a computer, very big.
+// instead I return the compliment membership function
+function compliment(MU) {
+  return x => 1 - MU(x)
 }
 
-function union(MUa, MUb, U) {
-  // C = A ∪ B
-  // MUc = MAX(MUa(x), MUb(x)) for each member of U
+// C = A ∪ B
+// MUc = MAX(MUa(x), MUb(x)) for each member of U
+// with union no membership filtering is performed prior to the union
+// calculation, because a member of U might have alpha = 0 in fuzzy set A
+// but not in B
+function union(MUa, MUb) {
+  return x => Math.max(MUa(member), MUb(member))
 }
 
-function intersection(MUa, MUb, U) {
-  // C = A ∩ B
-  // MUc = MIN(MUa(x), MUb(x)) for each member of U
+// C = A ∩ B
+// MUc = MIN(MUa(x), MUb(x)) for each member of U
+function intersection(MUa, MUb) {
+  return x => Math.min(MUa(x), MUb(x))
 }
 
 function checkZeroToOne(alpha, name = 'alpha') {
@@ -218,6 +245,8 @@ function alphaMap(MU, U) {
   const result = new Map()
   for (const member of U) {
     const alpha = MU(member)
+
+    // not a member
     if (alpha === 0) continue
 
     let levelMembers = result.get(alpha)
@@ -249,5 +278,11 @@ module.exports = {
   isSubset,
   isProperSubset,
   alphaMap,
+  scalarCardinality,
+  relativeCardinality,
+  fuzzyCardinality,
+  compliment,
+  union,
+  intersection,
   FuzzySet
 }

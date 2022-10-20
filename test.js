@@ -11,7 +11,14 @@ const {
   isEqual,
   isNormalized,
   isSubset,
-  isProperSubset
+  isProperSubset,
+  scalarCardinality,
+  relativeCardinality,
+  fuzzyCardinality,
+  compliment,
+  union,
+  intersection,
+  alphaMap
 } = require('./index')
 
 const MU = x => {
@@ -28,8 +35,8 @@ const nonConvexMU = x => {
   return 0
 }
 
-const normalCrispSet = [-1, 0, 1, 2, 3, 4, 5, 6]
-const subNormalCrispSet = [5, 6]
+const normalCrispSet = Object.freeze([-1, 0, 1, 2, 3, 4, 5, 6])
+const subNormalCrispSet = Object.freeze([5, 6])
 
 test('core', t => {
   t.deepEqual(core(MU, normalCrispSet), [2])
@@ -67,7 +74,7 @@ test('isNormalized', t => {
   t.false(isNormalized(MU, subNormalCrispSet))
 })
 
-test('isConvex', t => {
+test.skip('isConvex', t => {
   const aSet = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
   t.false(isConvex(nonConvexMU, 9, 2, 0.5))
   t.true(isConvex(MU, 0, 2, 0.5))
@@ -83,7 +90,7 @@ test('isSubset', t => {
   const MUsub = x => {
     return Math.max(0, MU(x) - 0.2)
   }
-  
+
   t.true(isSubset(MUsub, MU, normalCrispSet))
 
   const MUnotsub = x => {
@@ -92,7 +99,7 @@ test('isSubset', t => {
 
   t.false(isSubset(MUnotsub, MU, normalCrispSet))
 
-  // MU is subset of MU but not a proper subset
+  // MU is subset of MU?
   t.true(isSubset(MU, MU, normalCrispSet))
 })
 
@@ -100,15 +107,41 @@ test('isProperSubset', t => {
   const MUsub = x => {
     return Math.max(0, MU(x) - 0.3)
   }
-  
+
   t.true(isProperSubset(MUsub, MU, normalCrispSet))
 
-  // const MUnotsub = x => {
-  //   return Math.min(1, MU(x) + 0.7)
-  // }
+  const MUnotsub = x => {
+    return Math.min(1, MU(x) + 0.7)
+  }
 
-  // t.false(isProperSubset(MUnotsub, MU, normalCrispSet))
+  t.false(isProperSubset(MUnotsub, MU, normalCrispSet))
 
-  // // MU is subset of MU but not a proper subset
-  // t.false(isProperSubset(MU, MU, normalCrispSet)) 
+  // MU not a proper subset of MU
+  t.false(isProperSubset(MU, MU, normalCrispSet))
 })
+
+
+test('alphaMap', t => {
+  const aMap = alphaMap(MU, normalCrispSet)
+  t.is(aMap.size, 2)
+  t.deepEqual(aMap.get(0.5), [1, 3])
+  t.deepEqual(aMap.get(1), [2])
+})
+
+test('scalarCadinality', t => {
+  t.is(scalarCardinality(MU, normalCrispSet), 2)
+})
+
+test('relativeCardinality', t => {
+  t.is(relativeCardinality(MU, normalCrispSet), scalarCardinality(MU, normalCrispSet) / normalCrispSet.length)
+})
+
+test('fuzzyCardinality', t => {
+  const fCard = fuzzyCardinality(MU, normalCrispSet)
+  t.is(fCard.size, 2)
+  t.is(fCard.get(0.5), 2)
+  t.is(fCard.get(1), 1)
+})
+
+test.skip('union', t => {})
+test.skip('intersection', t => {})
