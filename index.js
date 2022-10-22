@@ -12,33 +12,46 @@ class FuzzySet {
     this._U = U
   }
 
+  get universe() {
+    return [...this._U]
+  }
+
+  get members() {
+    return this._U.filter(x => isMember(this._MU, x))
+  }
+
+  get alphaMap() {
+    return alphaMap(this._MU, this._U)
+  }
+
+  // kernel
+  get core() {
+    return core(this._MU, this._U)
+  }
+
+  get support() {
+    return support(this._MU, this._U)
+  }
+
+  get height() {
+    return height(this._MU, this._U)
+  }
+
+  get isNormalized() {
+    return isNormalized(this._MU, this._U)
+  }
+
+  get isConvex() {
+    const members = this.members
+    return isConvex(this._MU, members[0], members[members.length - 1], 0.5)
+  }
+
   MU(x) {
     return this._MU(x)
   }
 
   isMember(x) {
     return isMember(this._MU, x)
-  }
-
-  members() {
-    return this._U.filter(x => isMember(this._MU, x))
-  }
-
-  alphaMap() {
-    return alphaMap(this._MU, this._U)
-  }
-
-  // kernel
-  core() {
-    return core(this._MU, this._U)
-  }
-
-  support() {
-    return support(this._MU, this._U)
-  }
-
-  height() {
-    return height(this._MU, this._U)
   }
 
   // alpha level set
@@ -51,26 +64,34 @@ class FuzzySet {
     return strongAlphaCut(this._MU, this._U, alpha)
   }
 
-  isNormalized() {
-    return isNormalized(this._MU, this._U)
-  }
-
-  isConvex() {
-    const members = this.members()
-    return isConvex(this._MU, members[0], members[members.length - 1], 0.5)
-  }
-
   [Symbol.iterator]() {
-
+    let value
+    let position = 0
+    const set = this
+    return {
+      next() {
+        while (position < set._U.length) {
+          const x = set._U[position++]
+          const alpha = set._MU(x)
+          if (alpha > 0) {
+            value = [x, alpha]
+            break
+          }
+        }
+        return this
+      },
+      get done() {
+        return position === set._U.length
+      },
+      get value() {
+        return value
+      }
+    }
   }
 
   static of (MU, U) {
     return new FuzzySet(MU, U)
   }
-}
-
-function isMember(MU, x) {
-  return MU(x) > 0
 }
 
 // aka kernel
@@ -120,16 +141,12 @@ function isNormalized(MU, U) {
 
 // Pretty sure i'm missing something here...
 function isConvex(MU, x1, x2, lambda) {
-  throw new Error('probably wrong')
-
   checkZeroToOne(lambda, 'lambda')
 
   // this should be a member of U, but it's not??
   // maybe member means, in the range of?
   const crispConvex = lambda * x1 + ((1 - lambda) * x2)
-  // if (!U.includes(crispConvex)) {
-  //   return false
-  // }
+
   const muX1 = MU(x1)
   const muX2 = MU(x2)
   const muT = MU(crispConvex)
@@ -208,9 +225,8 @@ function fuzzyCardinality(MU, U) {
 // X - universal set
 // A = {x memberOf X : some condition}
 // Ac (compliment) = {x memberOf X : x notMemberOf A}
-// maybe I can forgo the x member of X for Ac, but meh...
 //
-// a fuzzy set compliment has a MUc = 1-MU(x)
+// a fuzzy set compliment is the m.s.f MUc = 1-MU(x)
 // of course many times it doesn't make sense to return
 // the actual members of the compliment, since it might
 // be infinite or, inside a computer, very big.
@@ -225,13 +241,19 @@ function compliment(MU) {
 // calculation, because a member of U might have alpha = 0 in fuzzy set A
 // but not in B
 function union(MUa, MUb) {
-  return x => Math.max(MUa(member), MUb(member))
+  return x => Math.max(MUa(x), MUb(x))
 }
 
 // C = A ∩ B
 // MUc = MIN(MUa(x), MUb(x)) for each member of U
 function intersection(MUa, MUb) {
   return x => Math.min(MUa(x), MUb(x))
+}
+
+// simple difference m.s.f = A U compliment(B)
+function simpleDifference(MUa, MUb) {
+  const bComp = compliment(MUb)
+  return intersection(MUa, bComp)
 }
 
 function checkZeroToOne(alpha, name = 'alpha') {
@@ -266,6 +288,38 @@ function alphaMap(MU, U) {
   return result
 }
 
+function isMember(MU, x) {
+  return MU(x) > 0
+}
+
+function staticFuzzySet(MU, U) {
+  const result = []
+  for (const member of U) {
+    const alpha = MU(member)
+    if (alpha === 0) continue
+
+    result.push([member, alpha])
+  }
+  return result
+}
+
+// take a "static" fuzzy set array:
+// [ [1, 0.5], [2, 0.2]]
+// and return a membership function
+function msfFromStaticFuzzySet(staticFuzzySet) {
+  const internal = new Map()
+
+  for (const [x, alpha] of staticFuzzySet) {
+    if (alpha === 0) continue
+    internal.set(x, alpha)
+  }
+
+  return x => {
+    const alpha = internal.get(x)
+    return alpha === undefined ? 0 : alpha
+  }
+}
+
 module.exports = {
   core,
   support,
@@ -284,5 +338,9 @@ module.exports = {
   compliment,
   union,
   intersection,
-  FuzzySet
+  simpleDifference,
+  FuzzySet,
+  staticFuzzySet,
+  msfFromStaticFuzzySet,
+  ascify: require('./ascify.js')
 }

@@ -3,7 +3,7 @@ const { FuzzySet } = require('./index')
 
 function ascify(MU, U) {
   const fuzzySet = FuzzySet.of(MU, U)
-  const members = fuzzySet.members().sort()
+  const members = fuzzySet.members.sort()
   const xStep = smallestStep(members)
   const minX = members[0] - (5 * xStep)
   const maxX = members[members.length - 1] + (5 * xStep)
