@@ -20,8 +20,8 @@ const {
   intersection,
   simpleDifference,
   alphaMap,
-  staticFuzzySet,
-  msfFromStaticFuzzySet
+  discreteFuzzySet,
+  msfFromDiscreteFuzzySet
 } = require('./index')
 
 const MU = x => {
@@ -130,17 +130,17 @@ test('alphaMap', t => {
   t.deepEqual(aMap.get(1), [2])
 })
 
-test('staticFuzzySet', t => {
-  t.deepEqual(staticFuzzySet(MU, normalCrispSet), [
+test('discreteFuzzySet', t => {
+  t.deepEqual(discreteFuzzySet(MU, normalCrispSet), [
     [1, 0.5],
     [2, 1],
     [3, 0.5]
   ])
 })
 
-test('msfFromStaticFuzzySet', t => {
-  const set = staticFuzzySet(MU, normalCrispSet)
-  const staticMsf = msfFromStaticFuzzySet(set)
+test('msfFromDiscreteFuzzySet', t => {
+  const set = discreteFuzzySet(MU, normalCrispSet)
+  const staticMsf = msfFromDiscreteFuzzySet(set)
   t.true(isEqual(staticMsf, MU, normalCrispSet))
 })
 
@@ -169,7 +169,7 @@ test('union', t => {
     [6, .3]
   ]
 
-  const MUa = msfFromStaticFuzzySet(setA)
+  const MUa = msfFromDiscreteFuzzySet(setA)
 
   const setB = [
     [3, .2],
@@ -180,12 +180,12 @@ test('union', t => {
     [8, 1]
   ]
 
-  const MUb = msfFromStaticFuzzySet(setB)
+  const MUb = msfFromDiscreteFuzzySet(setB)
 
   const U = Array.from(new Set(setA.map(([x]) => x).concat(setB.map(([x]) => x))))
 
   const MUunion = union(MUa, MUb)
-  t.deepEqual(staticFuzzySet(MUunion, U), [
+  t.deepEqual(discreteFuzzySet(MUunion, U), [
     [1, .2],
     [2, .5],
     [3, .8],
@@ -207,7 +207,7 @@ test('intersection', t => {
     [6, .3]
   ]
 
-  const MUa = msfFromStaticFuzzySet(setA)
+  const MUa = msfFromDiscreteFuzzySet(setA)
 
   const setB = [
     [3, .2],
@@ -218,12 +218,12 @@ test('intersection', t => {
     [8, 1]
   ]
 
-  const MUb = msfFromStaticFuzzySet(setB)
+  const MUb = msfFromDiscreteFuzzySet(setB)
 
   const U = Array.from(new Set(setA.map(([x]) => x).concat(setB.map(([x]) => x))))
 
   const MUintersection = intersection(MUa, MUb)
-  t.deepEqual(staticFuzzySet(MUintersection, U), [
+  t.deepEqual(discreteFuzzySet(MUintersection, U), [
     [3, .2],
     [4, .4],
     [5, .6],
@@ -248,5 +248,5 @@ test('FuzzySet', t => {
   t.deepEqual(set.height, height(MU, normalCrispSet))
   t.deepEqual(set.isNormalized, isNormalized(MU, normalCrispSet))
   t.deepEqual(set.isConvex, isConvex(MU, normalCrispSet[0], normalCrispSet[normalCrispSet.length - 1], 0.5))
-  t.deepEqual(Array.from(set), staticFuzzySet(MU, normalCrispSet))
+  t.deepEqual(Array.from(set), discreteFuzzySet(MU, normalCrispSet))
 })

@@ -292,7 +292,7 @@ function isMember(MU, x) {
   return MU(x) > 0
 }
 
-function staticFuzzySet(MU, U) {
+function discreteFuzzySet(MU, U) {
   const result = []
   for (const member of U) {
     const alpha = MU(member)
@@ -306,10 +306,10 @@ function staticFuzzySet(MU, U) {
 // take a "static" fuzzy set array:
 // [ [1, 0.5], [2, 0.2]]
 // and return a membership function
-function msfFromStaticFuzzySet(staticFuzzySet) {
+function msfFromDiscreteFuzzySet(discreteFuzzySet) {
   const internal = new Map()
 
-  for (const [x, alpha] of staticFuzzySet) {
+  for (const [x, alpha] of discreteFuzzySet) {
     if (alpha === 0) continue
     internal.set(x, alpha)
   }
@@ -340,7 +340,7 @@ module.exports = {
   intersection,
   simpleDifference,
   FuzzySet,
-  staticFuzzySet,
-  msfFromStaticFuzzySet,
+  discreteFuzzySet,
+  msfFromDiscreteFuzzySet,
   ascify: require('./ascify.js')
 }
