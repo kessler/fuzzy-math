@@ -1,7 +1,7 @@
 const test = require('ava')
 const ascify = require('./ascify')
 const {
-  FuzzySet,
+  DiscreteFuzzySet,
   core,
   support,
   height,
@@ -235,8 +235,8 @@ test.skip('simpleDifference', t => {
 
 })
 
-test('FuzzySet', t => {
-  const set = FuzzySet.of(MU, normalCrispSet)
+test('DiscreteFuzzySet', t => {
+  const set = DiscreteFuzzySet.of(MU, normalCrispSet)
   t.is(set.MU(1), 0.5)
   t.is(set.MU(7), 0)
   t.true(set.isMember(1))
@@ -250,3 +250,4 @@ test('FuzzySet', t => {
   t.deepEqual(set.isConvex, isConvex(MU, normalCrispSet[0], normalCrispSet[normalCrispSet.length - 1], 0.5))
   t.deepEqual(Array.from(set), discreteFuzzySet(MU, normalCrispSet))
 })
+

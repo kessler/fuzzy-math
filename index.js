@@ -1,4 +1,4 @@
-class FuzzySet {
+class DiscreteFuzzySet {
   constructor(MU, U) {
     if (MU === undefined) {
       throw new Error('invalid membership function MU argument in constructor')
@@ -90,7 +90,7 @@ class FuzzySet {
   }
 
   static of (MU, U) {
-    return new FuzzySet(MU, U)
+    return new DiscreteFuzzySet(MU, U)
   }
 }
 
@@ -110,7 +110,9 @@ function height(MU, U) {
   // cannot be below zero
   let max = 0
   for (const member of U) {
-    max = Math.max(MU(member), max)
+    const alpha = MU(member)
+    if (isNotMemberA(alpha)) continue
+    max = Math.max(alpha, max)
   }
   return max
 }
@@ -121,7 +123,7 @@ function alphaCut(MU, U, alpha) {
 
   return U.filter(x => {
     const MUx = MU(x)
-    return MUx >= alpha && MUx > 0
+    return MUx >= alpha && isMemberA(MUx)
   })
 }
 
@@ -131,7 +133,7 @@ function strongAlphaCut(MU, U, alpha) {
 
   return U.filter(x => {
     const MUx = MU(x)
-    return MUx > alpha && MUx > 0
+    return MUx > alpha && isMemberA(MUx)
   })
 }
 
@@ -169,10 +171,10 @@ function isEqual(MUa, MUb, U) {
 function isSubset(MUa, MUb, U) {
   for (const member of U) {
     const yA = MUa(member)
-    if (yA === 0) continue
+    if (isNotMemberA(yA)) continue
 
     const yB = MUb(member)
-    if (yB === 0) continue
+    if (isNotMemberA(yB)) continue
 
     // negation of MUa(x) <= MUb(x)
     if (yA > yB) {
@@ -188,10 +190,10 @@ function isSubset(MUa, MUb, U) {
 function isProperSubset(MUa, MUb, U) {
   for (const member of U) {
     const yA = MUa(member)
-    if (yA === 0) continue
+    if (isNotMemberA(yA)) continue
 
     const yB = MUb(member)
-    if (yB === 0) continue
+    if (isNotMemberA(yB)) continue
 
     // negation of MUa(x) < MUb(x)
     if (yA >= yB) {
@@ -268,8 +270,7 @@ function alphaMap(MU, U) {
   for (const member of U) {
     const alpha = MU(member)
 
-    // not a member
-    if (alpha === 0) continue
+    if (isNotMemberA(alpha)) continue
 
     let levelMembers = result.get(alpha)
     if (!levelMembers) {
@@ -289,7 +290,16 @@ function alphaMap(MU, U) {
 }
 
 function isMember(MU, x) {
-  return MU(x) > 0
+  const alpha = MU(x)
+  return isMemberA(alpha)
+}
+
+function isMemberA(alpha) {
+  return alpha > 0 && alpha <= 1
+}
+
+function isNotMemberA(alpha) {
+  return !isMemberA(alpha)
 }
 
 function discreteFuzzySet(MU, U) {
@@ -320,6 +330,22 @@ function msfFromDiscreteFuzzySet(discreteFuzzySet) {
   }
 }
 
+function triangularMSF(a, b, c) {
+  return x => Math.max(Math.min((x - a) / (b - a), 1, (c - x) / (c - b)), 0)
+}
+
+function trapezoidalMSF(a, b, c, d) {
+  return x => Math.max(Math.min((x - a) / (b - a), 1, (d - x) / (d - c)), 0)
+}
+
+function bellMSF(a, b, c) {
+  return x => 1 / (1 + (Math.abs((x - c) / a) ** (2 * b)))
+}
+
+function gaussianMSF(mean, sigma) {
+  return x => Math.exp(-((x - mean) ** 2) / sigma ** 2)
+}
+
 module.exports = {
   core,
   support,
@@ -331,6 +357,9 @@ module.exports = {
   isEqual,
   isSubset,
   isProperSubset,
+  isMember,
+  isMemberA,
+  isNotMemberA,
   alphaMap,
   scalarCardinality,
   relativeCardinality,
@@ -339,8 +368,11 @@ module.exports = {
   union,
   intersection,
   simpleDifference,
-  FuzzySet,
   discreteFuzzySet,
   msfFromDiscreteFuzzySet,
-  ascify: require('./ascify.js')
+  triangularMSF,
+  trapezoidalMSF,
+  bellMSF,
+  gaussianMSF,
+  DiscreteFuzzySet
 }

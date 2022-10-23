@@ -1,8 +1,8 @@
 const asciichart = require('asciichart')
-const { FuzzySet } = require('./index')
+const { DiscreteFuzzySet } = require('./index')
 
 function ascify(MU, U) {
-  const fuzzySet = FuzzySet.of(MU, U)
+  const fuzzySet = DiscreteFuzzySet.of(MU, U)
   const members = fuzzySet.members.sort()
   const xStep = smallestStep(members)
   const minX = members[0] - (5 * xStep)
@@ -11,7 +11,6 @@ function ascify(MU, U) {
   const chartData = []
 
   chartData.push(MU(minX))
-
   for (let i = 1, x = 0; i < members.length; i++, x++) {
     const a = members[x]
     const b = members[i]
