@@ -3,7 +3,7 @@ const test = require('ava')
 
 test('SugenoFIS', t => {
   const fis = SugenoFIS.from({
-    universe: {
+    sets: {
       large: x => x >= 100 ? 1 : x >= 35 && x < 100 ? 0.5 : 0,
       small: x => x <= 25 ? 1 : x < 40 && x > 25 ? 0.5 : 0
     },

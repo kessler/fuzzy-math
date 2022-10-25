@@ -1,5 +1,5 @@
 const test = require('ava')
-const ascify = require('./ascify')
+
 const {
   DiscreteFuzzySet,
   core,
@@ -22,7 +22,7 @@ const {
   alphaMap,
   discreteFuzzySet,
   msfFromDiscreteFuzzySet
-} = require('./index')
+} = require('../lib/core.js')
 
 const MU = x => {
   if (x === 2) return 1
