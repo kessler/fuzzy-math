@@ -28,5 +28,8 @@
   "devDependencies": {
     "asciichart": "^1.5.25",
     "ava": "^4.3.3"
+  },
+  "dependencies": {
+    "mathjs": "^11.3.2"
   }
 }
