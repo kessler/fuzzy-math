@@ -3,8 +3,15 @@
   "version": "2.0.0",
   "description": "a fuzzy math library",
   "main": "index.js",
+  "files": [
+    "lib",
+    "index.js",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
-    "test": "npx ava"
+    "test": "npx ava",
+    "build:demo": "esbuild demo/entry.js --bundle --format=iife --global-name=fuzzyMath --outfile=docs/demo/fuzzy-math.js"
   },
   "repository": {
     "type": "git",
@@ -27,7 +34,8 @@
   "homepage": "https://github.com/kessler/fuzzy-math#readme",
   "devDependencies": {
     "asciichart": "^1.5.25",
-    "ava": "^4.3.3"
+    "ava": "^4.3.3",
+    "esbuild": "^0.28.0"
   },
   "dependencies": {
     "mathjs": "^11.3.2"

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>fuzzy-math — interactive demo</title>
+  <meta name="description" content="Interactive demo of fuzzy-math: membership functions, fuzzy set operations, the extension principle, and fuzzy-number arithmetic." />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <h1>fuzzy&#8209;math</h1>
+      <p class="tagline">Fuzzy sets in the browser — membership functions, the standard operations, &alpha;&#8209;cuts, and fuzzy&#8209;number arithmetic via Zadeh's extension principle.</p>
+      <p class="meta">
+        <a href="https://github.com/kessler/fuzzy-math">GitHub</a>
+        <span class="dot">&middot;</span>
+        <span class="wip">⚠ work in progress — learning project, not yet reviewed by a mathematician</span>
+      </p>
+    </div>
+  </header>
+
+  <nav class="site-nav">
+    <div class="wrap">
+      <a href="#playground">MF playground</a>
+      <a href="#operations">Set operations</a>
+      <a href="#arithmetic">Fuzzy arithmetic</a>
+      <a href="#alphacut">&alpha;&#8209;cut explorer</a>
+    </div>
+  </nav>
+
+  <main class="wrap">
+
+    <!-- 1. MF PLAYGROUND -->
+    <section id="playground" class="card">
+      <div class="card-head">
+        <h2>Membership function playground</h2>
+        <p>Pick a generator and tweak its parameters. The curve is the grade of membership &mu;(x) &isin; [0,1] across the universe.</p>
+      </div>
+      <div class="card-body">
+        <div class="controls">
+          <label class="field">
+            <span>Generator</span>
+            <select id="pg-type">
+              <option value="triangular">triangularMSF</option>
+              <option value="trapezoidal">trapezoidalMSF</option>
+              <option value="gaussian">gaussianMSF</option>
+              <option value="bell">bellMSF</option>
+              <option value="sigmoid">sigmoidMSF</option>
+            </select>
+          </label>
+          <div id="pg-params" class="params"></div>
+          <dl class="readout" id="pg-readout"></dl>
+          <code class="callout" id="pg-call"></code>
+        </div>
+        <div class="chart-wrap"><canvas id="pg-chart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- 2. SET OPERATIONS -->
+    <section id="operations" class="card">
+      <div class="card-head">
+        <h2>Fuzzy set operations</h2>
+        <p>Two fuzzy sets A and B (triangular). Zadeh's standard connectives: union = max, intersection = min, complement = 1&minus;&mu;, difference = A &cap; B&#7580;.</p>
+      </div>
+      <div class="card-body">
+        <div class="controls">
+          <fieldset class="set-block">
+            <legend>Set A</legend>
+            <div id="op-A" class="params"></div>
+          </fieldset>
+          <fieldset class="set-block">
+            <legend>Set B</legend>
+            <div id="op-B" class="params"></div>
+          </fieldset>
+          <label class="field">
+            <span>Operation</span>
+            <select id="op-type">
+              <option value="union">union(A, B)</option>
+              <option value="intersection">intersection(A, B)</option>
+              <option value="complement">complement(A)</option>
+              <option value="simpleDifference">simpleDifference(A, B)</option>
+            </select>
+          </label>
+          <code class="callout" id="op-call"></code>
+        </div>
+        <div class="chart-wrap"><canvas id="op-chart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- 3. FUZZY ARITHMETIC -->
+    <section id="arithmetic" class="card">
+      <div class="card-head">
+        <h2>Fuzzy&#8209;number arithmetic</h2>
+        <p>Two triangular fuzzy numbers. The result is computed with the <strong>extension principle</strong> (<code>min</code> on the input side, sup over preimages) — watch the spread grow. Try "around 2" + "around 3" = "around 5".</p>
+      </div>
+      <div class="card-body">
+        <div class="controls">
+          <fieldset class="set-block">
+            <legend>Fuzzy number A</legend>
+            <div id="ar-A" class="params"></div>
+          </fieldset>
+          <fieldset class="set-block">
+            <legend>Fuzzy number B</legend>
+            <div id="ar-B" class="params"></div>
+          </fieldset>
+          <label class="field">
+            <span>Operation</span>
+            <select id="ar-type">
+              <option value="add">A.add(B)</option>
+              <option value="sub">A.sub(B)</option>
+              <option value="mul">A.mul(B)</option>
+              <option value="div">A.div(B)</option>
+            </select>
+          </label>
+          <dl class="readout" id="ar-readout"></dl>
+          <code class="callout" id="ar-call"></code>
+          <p class="status" id="ar-status"></p>
+        </div>
+        <div class="chart-wrap"><canvas id="ar-chart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- 4. ALPHA-CUT EXPLORER -->
+    <section id="alphacut" class="card">
+      <div class="card-head">
+        <h2>&alpha;&#8209;cut &amp; structure explorer</h2>
+        <p>Drag &alpha; to slice the set. The &alpha;&#8209;cut is { x : &mu;(x) &ge; &alpha; }; support, core, and height fall out of the same machinery.</p>
+      </div>
+      <div class="card-body">
+        <div class="controls">
+          <div id="ac-params" class="params"></div>
+          <label class="field">
+            <span>&alpha; = <strong id="ac-alpha-val">0.50</strong></span>
+            <input type="range" id="ac-alpha" min="0" max="1" step="0.01" value="0.5" />
+          </label>
+          <dl class="readout" id="ac-readout"></dl>
+          <code class="callout" id="ac-call"></code>
+        </div>
+        <div class="chart-wrap"><canvas id="ac-chart"></canvas></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Built with <a href="https://github.com/kessler/fuzzy-math">fuzzy-math</a>. The whole library powering this page is a 13&nbsp;KB bundle with zero runtime dependencies.</p>
+      <p class="refs">
+        [1] Zadeh (1965) <em>Fuzzy Sets</em> &middot;
+        [2] <a href="https://en.wikipedia.org/wiki/Fuzzy_set">Wikipedia: Fuzzy set</a> &middot;
+        [25] Zimmermann (2010) <em>Fuzzy set theory</em>
+      </p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <script src="./fuzzy-math.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
