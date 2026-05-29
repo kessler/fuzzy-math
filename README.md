@@ -1,38 +1,109 @@
-# fuzzy-math (WIP)
+# fuzzy-math
 
-Seriously this is really WIP!
+A small, dependency-light fuzzy set theory library for JavaScript — membership
+functions, the standard set operations, α-cuts, Zadeh's extension principle, and
+fuzzy-number arithmetic. Built layer by layer against the primary literature,
+with each operation annotated to its source.
 
-<small>I'm not a mathematician and this library did not undergo any rigorious inspection by one. More over I wrote this library while learning the subject matter, so there are probably serious mistakes in it. However, at some point, I will collaborate with a mathematician to rectify this situation.</small>
+**▶ [Try the interactive demo](https://kessler.github.io/fuzzy-math/demo/)** — membership-function playground, set operations, fuzzy arithmetic, and an α-cut explorer, all running on the library in your browser.
 
-## Fuzzy Sets
+> **⚠️ Work in progress.** This is genuinely WIP.
+>
+> <small>I'm not a mathematician and this library has not undergone rigorous
+> inspection by one. I wrote it while learning the subject, so there may still be
+> mistakes. The Layer 1 core (below) has been reworked for correctness and is
+> covered by tests, but treat the wider surface with care until it's reviewed.</small>
 
-from [wikipedia](https://en.wikipedia.org/wiki/Fuzzy_set):
+## Install
 
-> A fuzzy set is a pair ( U , m ) where U is a set (often required to be non-empty) and m : U → [ 0 , 1 ] a membership function. The reference set U (sometimes denoted by Ω or X is called universe of discourse, and for each x ∈ U, the value m ( x ) is called the grade of membership of x in ( U , m ). The function m = μ A is called the membership function of the fuzzy set A = ( U , m ). 
+```sh
+npm install fuzzy-math
+```
 
-### api
+## What is a fuzzy set?
 
-#### classy api
+A classical (crisp) set draws a hard boundary: an element is either in or out.
+A **fuzzy set** softens that boundary — each element has a *grade of membership*
+between 0 and 1.
 
-The classy api will simply save you the trouble of stating μ and U all the time. 
+> A fuzzy set is a pair `(U, m)` where `U` is the universe of discourse and
+> `m : U → [0,1]` is a membership function. For each `x ∈ U`, the value `m(x)` is
+> the grade of membership of `x`. — [Wikipedia](https://en.wikipedia.org/wiki/Fuzzy_set)
 
-TBD: examples and reference
+Throughout the code the membership function is written `μ` (or `MU`) and the
+universe is `U`.
 
-#### low level api
+## Quick start
 
-the low level API is implemented as simple functions that will almost always take a μ and a U to operate on.
+```js
+const { core } = require('fuzzy-math')
+const { DiscreteFuzzySet, msfFromDiscreteFuzzySet } = core
 
-TBD: examples and reference
+// "tall" defined over a handful of heights (cm), μ given explicitly
+const tall = DiscreteFuzzySet.of(
+  msfFromDiscreteFuzzySet([[160, 0.2], [170, 0.5], [180, 0.8], [190, 1]]),
+  [160, 170, 180, 190, 200]
+)
 
-## Layer 1 capabilities (Zadeh 1965 base)
+tall.MU(180)        // 0.8
+tall.height         // 1            — the largest membership
+tall.isNormalized   // true         — height === 1
+tall.core           // [190]        — members with μ === 1
+tall.support        // [160, 170, 180, 190]   — members with μ > 0
+tall.alphaCut(0.5)  // [170, 180, 190]        — members with μ ≥ 0.5
+tall.isConvex       // true
+```
 
-The `core` namespace implements the foundational layer of fuzzy set theory — what every fuzzy set *is* before you choose connectives or applications.
+## API
 
-**Membership contract.** Every membership function must satisfy `μ : U → [0,1]` [1][2]. A value outside `[0,1]` throws a `RangeError` rather than being silently filtered — a membership of `1.2` is a bug in your MSF, and the library says so.
+The package exposes three namespaces:
 
-**Standard operations** [1]:
+```js
+const { core, sugeno, ascify } = require('fuzzy-math')
+```
 
-| Operation | Definition |
+- **`core`** — the fuzzy set foundation (Layer 1). Documented below.
+- **`sugeno`** — a Takagi–Sugeno fuzzy inference system (`SugenoFIS`). *WIP.*
+- **`ascify`** — render a fuzzy set as an ASCII chart in the terminal. *WIP.*
+
+### Two ways to use `core`
+
+**Classy API** — `DiscreteFuzzySet` wraps a `(μ, U)` pair so you don't have to
+pass them around:
+
+```js
+const { DiscreteFuzzySet, triangularMSF } = core
+const warm = DiscreteFuzzySet.of(triangularMSF(15, 22, 30), [10, 15, 20, 25, 30])
+
+warm.support        // members with μ > 0
+warm.alphaCut(0.7)  // α-level set
+for (const [x, mu] of warm) { /* iterate members and their grades */ }
+```
+
+**Low-level API** — plain functions that take `μ` and `U` (or just `μ` for the
+operations that return a new membership function):
+
+```js
+const { union, intersection, complement, support } = core
+
+const a = x => (x === 1 ? 0.6 : x === 2 ? 0.3 : 0)
+const b = x => (x === 2 ? 0.7 : x === 3 ? 0.9 : 0)
+const U = [1, 2, 3]
+
+support(union(a, b), U)         // [1, 2, 3]
+support(intersection(a, b), U)  // [2]
+complement(a)(1)                // 0.4
+```
+
+### Membership contract
+
+Every membership function must satisfy `μ : U → [0,1]` [1][2]. A value outside
+`[0,1]` throws a `RangeError` rather than being silently filtered — a membership
+of `1.2` is a bug in your MSF, and the library says so.
+
+### Standard operations [1]
+
+| Function | Definition |
 |---|---|
 | `union(μA, μB)` | `μ(x) = max(μA(x), μB(x))` |
 | `intersection(μA, μB)` | `μ(x) = min(μA(x), μB(x))` |
@@ -40,78 +111,88 @@ The `core` namespace implements the foundational layer of fuzzy set theory — w
 | `simpleDifference(μA, μB)` | `A ∩ Bᶜ = min(μA(x), 1 − μB(x))` |
 | `isSubset(μA, μB, U)` | `A ⊆ B` iff `μA(x) ≤ μB(x)` for **all** `x ∈ U` |
 | `isProperSubset(μA, μB, U)` | `A ⊆ B` **and** `μA(x) < μB(x)` somewhere |
+| `isEqual(μA, μB, U)` | `μA(x) === μB(x)` for all `x ∈ U` |
 
-**α-cuts and structure** [2]: `alphaCut` (`{x : μ(x) ≥ α}`), `strongAlphaCut` (`{x : μ(x) > α}`), `support`, `core`, `height`, `isNormalized`.
+### α-cuts and structure [2]
 
-**Convexity** [1][2]: `isConvex(μ, U)` decides convexity *correctly* — A is convex iff every α-cut is a contiguous run in the (sorted) universe. The older single-point inequality `μ(λx₁ + (1−λ)x₂) ≥ min(μ(x₁), μ(x₂))` is preserved under the honest name `convexAt(μ, x1, x2, lambda)` (a *necessary* condition only).
+`alphaCut(μ, U, α)` (`{x : μ(x) ≥ α}`), `strongAlphaCut` (`{x : μ(x) > α}`),
+`support`, `core`, `height`, `isNormalized`, plus cardinalities
+(`scalarCardinality`, `relativeCardinality`, `fuzzyCardinality`) and `alphaMap`.
 
-**Extension principle** [2][25]: `extend(f, [A, ...])` lifts any crisp function `f` to fuzzy sets via `μ_{f(A)}(y) = sup_{x ∈ f⁻¹(y)} μ_A(x)`, combining inputs with `min` (Zadeh's original convention). This is the engine of fuzzy arithmetic.
+### Convexity [1][2]
 
-**Fuzzy numbers** [25]: `FuzzyNumber` is a convex, normal fuzzy set on ℝ with `add` / `sub` / `mul` / `div` implemented via the extension principle. Invariants (convex + normal) are enforced strictly at construction.
+`isConvex(μ, U)` decides convexity *correctly*: A is convex iff every α-cut is a
+contiguous run in the sorted universe. The older single-point inequality
+`μ(λx₁ + (1−λ)x₂) ≥ min(μ(x₁), μ(x₂))` is preserved under the honest name
+`convexAt(μ, x1, x2, λ)` — a *necessary* condition only.
 
-## thoughts
+### Membership function generators
 
-#### Set vs Simple array as main data structure
-- Set is the "natural" choice, since it maintains an important quality of classic mathematical sets which is, the distinctness of it's members.
+`triangularMSF(a, b, c)`, `trapezoidalMSF(a, b, c, d)`, `bellMSF(a, b, c)`,
+`gaussianMSF(mean, sigma, m=2)`, `sigmoidMSF(rate, center)`, and dynamic
+(re-parameterizable) variants `dynamicGaussianMSF` / `dynamicSigmoidMSF`.
 
-- Looking at the code though, I noticed that iteration is probably the most used operation. Some quick research on the internet yields that arrays are faster that sets.
+### Extension principle [2][25]
 
-- The array api (reduce, filter etc) is much more cleaner than the Set's. Having similar api on a Set will require additional coding.
-
-So for now I choose Array over Set.
-
-- it seems like MU is not a proper subset of MU but is a subset
-
-#### not just numerical fuzzy sets
-
-Using objects as member should work pretty great, as long as you make your MU play nicely with them:
+`extend(f, [A, ...])` lifts any crisp function `f` to fuzzy sets via
+`μ_{f(A)}(y) = sup_{x ∈ f⁻¹(y)} μ_A(x)`, combining inputs with `min` (Zadeh's
+original convention). It is the engine of fuzzy arithmetic.
 
 ```js
-class Member {
-  gt(something) {}
-  eq(something) {}
-  lt(something) {}
-  ... etc
-}
+const { extend, DiscreteFuzzySet, msfFromDiscreteFuzzySet } = core
 
-const MU = x => {
-  if (x.gt(5)) return 1
-  if (x.lt(0)) return 0.5
-  return 0
-}
+const around2 = DiscreteFuzzySet.of(msfFromDiscreteFuzzySet([[1, 0.5], [2, 1], [3, 0.5]]), [1, 2, 3])
+const around3 = DiscreteFuzzySet.of(msfFromDiscreteFuzzySet([[2, 0.5], [3, 1], [4, 0.5]]), [2, 3, 4])
 
+const sum = extend((x, y) => x + y, [around2, around3])
+sum.MU(5)  // 1    — 2 + 3, the peak
+sum.MU(7)  // 0.5  — 3 + 4
 ```
 
-#### serialization 
-- Serializing and de-serializing code might be a serious security risk. How to safely serialize fuzzy sets then, without serializing the membership function code?
+### Fuzzy numbers [25]
 
-- perhaps there can be a "static" and "dynamic" versions of a fuzzy set. The dynamic one will have a user provided function and can only be created at run time. The static one will serialize the fuzzy set array `[[x, MU(x)...]]` and when loaded will have an internal membership function that outputs from that array (practically this should be an object with a map from x => alpha)
+`FuzzyNumber` is a convex, normal fuzzy set on ℝ with `add` / `sub` / `mul` /
+`div` implemented via the extension principle. The convex + normal invariants
+are enforced strictly at construction (an invalid set throws).
 
+```js
+const { FuzzyNumber, triangularMSF } = core
 
-### todo
+// triangular fuzzy numbers ≈ (1,2,3) and (2,3,4) on a half-integer grid
+const A = new FuzzyNumber(triangularMSF(1, 2, 3), [1, 1.5, 2, 2.5, 3])
+const B = new FuzzyNumber(triangularMSF(2, 3, 4), [2, 2.5, 3, 3.5, 4])
 
-#### repeatative code
-when I started to write this the code was very nice, small and clean, but pretty quickly stuff got verbose and icky. Membership filtering from the crisp in low level api is one example but not the only one. Need to deal with that at some point, but in a way that's not going to double or triple the amount of iterations.
+const sum = A.add(B)   // reproduces the triangular number (3, 5, 7)
+sum.MU(5)              // 1   — peak at 2 + 3
+sum.core               // [5]
+```
 
-#### normalization
-When no member of the crisp set has an alpha of one
+## Layer roadmap
 
-#### big ones
-- fuzzy numbers
-- intervals?
-- fuzzy analysis
+The library is being built in layers, each anchored to the literature:
 
-### reference material
-- https://www-liphy.univ-grenoble-alpes.fr/pagesperso/bahram/biblio/Zadeh_FuzzySetTheory_1965.pdf
-- https://www.youtube.com/watch?v=oWqXwCEfY78 and subsequent lectures
-- https://core.ac.uk/download/pdf/82275055.pdf
-- https://en.wikipedia.org/wiki/Fuzzy_set
--
+- **Layer 1 — Zadeh 1965 base** *(implemented)*: membership functions, standard
+  operations, α-cuts, convexity, the extension principle, fuzzy numbers.
+- **Layer 2 — t-norms & t-conorms** *(planned)*: parameterized `union` /
+  `intersection`, residuated implications. This is where the hard-coded `min` in
+  `extend` becomes pluggable.
+- **Layer 3 — applications** *(planned)*: controllers, fuzzy clustering, ANFIS.
 
-### References
+See [CHANGELOG.md](./CHANGELOG.md) for what changed in each release.
 
-The Layer 1 capabilities above are annotated against these primary sources:
+## References
+
+The capabilities above are annotated against these primary sources:
 
 - **[1]** Zadeh, L.A. (1965). *Fuzzy Sets*. Information and Control 8(3): 338–353.
 - **[2]** *Fuzzy set* — Wikipedia. https://en.wikipedia.org/wiki/Fuzzy_set
 - **[25]** Zimmermann, H.-J. (2010). *Fuzzy set theory*. WIREs Computational Statistics 2: 317–332.
+
+## Design notes
+
+Informal working notes, design tradeoffs, and the TODO list live in
+[NOTES.md](./NOTES.md).
+
+## License
+
+Apache-2.0
