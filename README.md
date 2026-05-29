@@ -24,6 +24,31 @@ the low level API is implemented as simple functions that will almost always tak
 
 TBD: examples and reference
 
+## Layer 1 capabilities (Zadeh 1965 base)
+
+The `core` namespace implements the foundational layer of fuzzy set theory — what every fuzzy set *is* before you choose connectives or applications.
+
+**Membership contract.** Every membership function must satisfy `μ : U → [0,1]` [1][2]. A value outside `[0,1]` throws a `RangeError` rather than being silently filtered — a membership of `1.2` is a bug in your MSF, and the library says so.
+
+**Standard operations** [1]:
+
+| Operation | Definition |
+|---|---|
+| `union(μA, μB)` | `μ(x) = max(μA(x), μB(x))` |
+| `intersection(μA, μB)` | `μ(x) = min(μA(x), μB(x))` |
+| `complement(μ)` | `μ'(x) = 1 − μ(x)` |
+| `simpleDifference(μA, μB)` | `A ∩ Bᶜ = min(μA(x), 1 − μB(x))` |
+| `isSubset(μA, μB, U)` | `A ⊆ B` iff `μA(x) ≤ μB(x)` for **all** `x ∈ U` |
+| `isProperSubset(μA, μB, U)` | `A ⊆ B` **and** `μA(x) < μB(x)` somewhere |
+
+**α-cuts and structure** [2]: `alphaCut` (`{x : μ(x) ≥ α}`), `strongAlphaCut` (`{x : μ(x) > α}`), `support`, `core`, `height`, `isNormalized`.
+
+**Convexity** [1][2]: `isConvex(μ, U)` decides convexity *correctly* — A is convex iff every α-cut is a contiguous run in the (sorted) universe. The older single-point inequality `μ(λx₁ + (1−λ)x₂) ≥ min(μ(x₁), μ(x₂))` is preserved under the honest name `convexAt(μ, x1, x2, lambda)` (a *necessary* condition only).
+
+**Extension principle** [2][25]: `extend(f, [A, ...])` lifts any crisp function `f` to fuzzy sets via `μ_{f(A)}(y) = sup_{x ∈ f⁻¹(y)} μ_A(x)`, combining inputs with `min` (Zadeh's original convention). This is the engine of fuzzy arithmetic.
+
+**Fuzzy numbers** [25]: `FuzzyNumber` is a convex, normal fuzzy set on ℝ with `add` / `sub` / `mul` / `div` implemented via the extension principle. Invariants (convex + normal) are enforced strictly at construction.
+
 ## thoughts
 
 #### Set vs Simple array as main data structure
@@ -81,4 +106,12 @@ When no member of the crisp set has an alpha of one
 - https://www.youtube.com/watch?v=oWqXwCEfY78 and subsequent lectures
 - https://core.ac.uk/download/pdf/82275055.pdf
 - https://en.wikipedia.org/wiki/Fuzzy_set
-- 
+-
+
+### References
+
+The Layer 1 capabilities above are annotated against these primary sources:
+
+- **[1]** Zadeh, L.A. (1965). *Fuzzy Sets*. Information and Control 8(3): 338–353.
+- **[2]** *Fuzzy set* — Wikipedia. https://en.wikipedia.org/wiki/Fuzzy_set
+- **[25]** Zimmermann, H.-J. (2010). *Fuzzy set theory*. WIREs Computational Statistics 2: 317–332.
