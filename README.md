@@ -33,6 +33,10 @@ between 0 and 1.
 Throughout the code the membership function is written `μ` (or `MU`) and the
 universe is `U`.
 
+Universes are plain arrays. Most operations accept any member type your `μ`
+understands, but `isConvex`, `extend`-based arithmetic, and `FuzzyNumber`
+assume numeric members (they sort and combine `x` values numerically).
+
 ## Quick start
 
 ```js
@@ -178,6 +182,15 @@ The library is being built in layers, each anchored to the literature:
   `extend` becomes pluggable.
 - **Layer 3 — applications** *(planned)*: controllers, fuzzy clustering, ANFIS.
 
+Open questions not yet scheduled into a layer:
+
+- **Normalization** — a `normalize(μ, U)` operation (`μ(x) / height`) for
+  subnormal sets.
+- **Serialization** — persisting a fuzzy set without serializing its membership
+  function code (which would be a security risk). A likely route is storing the
+  materialized `[[x, μ(x)], ...]` pairs and rebuilding via
+  `msfFromDiscreteFuzzySet`.
+
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each release.
 
 ## References
@@ -187,11 +200,6 @@ The capabilities above are annotated against these primary sources:
 - **[1]** Zadeh, L.A. (1965). *Fuzzy Sets*. Information and Control 8(3): 338–353.
 - **[2]** *Fuzzy set* — Wikipedia. https://en.wikipedia.org/wiki/Fuzzy_set
 - **[25]** Zimmermann, H.-J. (2010). *Fuzzy set theory*. WIREs Computational Statistics 2: 317–332.
-
-## Design notes
-
-Informal working notes, design tradeoffs, and the TODO list live in
-[NOTES.md](./NOTES.md).
 
 ## License
 
